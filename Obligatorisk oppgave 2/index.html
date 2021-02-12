@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.14.0.css">
+    <style>
+        .markedBar {
+            stroke-width: 0.5px;
+            stroke: pink;
+        }
+        #qunit-fixture, #qunit {
+            margin-top: 500px;
+        }
+    </style>
+</head>
+<body>
+<div id="content">
+</div>
+<div id="qunit"></div>
+<div id="qunit-fixture"></div>
+<script src="https://code.jquery.com/qunit/qunit-2.14.0.js"></script>
+<script>
+    // hjelpevariabel for både view og controller
+    var contentDiv = document.getElementById('content');
+
+    // model
+    let numbers = [7, 3, 1, 5, 8];
+    let chosenBar = null; // Variabel for hvilken stolpe som er valgt
+    let inputValue; // Variabel for hva som er skrevet i input-feltet
+
+    // view
+    show();
+    function show() {
+        let svgInnerHtml = '';
+        for (let i = 0; i < numbers.length; i++) {
+            svgInnerHtml += drawBar(numbers[i], i + 1);
+        }
+        contentDiv.innerHTML = `
+            <svg id="chart" width="500" viewBox="0 0 80 60">
+                ${svgInnerHtml}
+            </svg><br/>
+            Valgt stolpe: ${chosenBar}
+            <br />
+            Verdi:
+            <input type="number" min="1" max="10" oninput="inputValue = this.value" />
+            <button onclick="createBar()">Legg til stolpe</button>
+            <button id="noclick" onclick="changeBar()">Endre valgt stolpe</button><br />
+            <button id="noclickyclick" onclick="deleteBar()">Fjerne valgt stolpe</button>
+            <div id="warning"></div>
+            `;
+            disableButtons();
+    }
+
+    function drawBar(number, barNo) {
+        const width = 8;
+        const spacing = 2;
+        let x = (barNo - 1) * (width + spacing);
+        let height = number * 10;
+        let y = 60 - height;
+        let color = calcColor(1, 10, barNo);
+        if (chosenBar == barNo) {
+            return `<rect width="${width}" height="${height}" class="markedBar"
+                            x="${x}" y="${y}" fill="${color}" onclick="chooseBar(${barNo})"></rect>`;
+        }
+        else {
+        return `<rect width="${width}" height="${height}"
+                            x="${x}" y="${y}" fill="${color}" onclick="chooseBar(${barNo})"></rect>`;
+        }
+    }
+
+    function calcColor(min, max, val) {
+        var minHue = 240, maxHue = 0;
+        var curPercent = (val - min) / (max - min);
+        var colString = "hsl(" + ((curPercent * (maxHue - minHue)) + minHue) + ",100%,50%)";
+        return colString;
+    }
+
+    // controller
+    function createBar() {
+        if (inputValue < 1 || inputValue > 10) {
+            document.getElementById("warning").innerHTML = "Value has to be between 0 and 10";
+            return;
+        }
+        if (chosenBar == null) {
+            numbers.push(inputValue);
+            show();
+        }
+    }
+    
+    function changeBar() {
+        if (inputValue < 1 || inputValue > 10) {
+            document.getElementById("warning").innerHTML = "Value has to be between 0 and 10";
+            return;
+        }
+        if (chosenBar == null) {
+            return;
+        }
+        if (chosenBar > 0 && chosenBar <= numbers.length) {
+            numbers[chosenBar-1] = inputValue;
+            show();
+        } 
+    }
+
+    function deleteBar() {
+        if (chosenBar == null) {
+            return;
+        }
+        if (chosenBar > 0 && chosenBar <= numbers.length) {
+            numbers.splice(chosenBar -1, 1);
+            chosenBar = null;
+            show();
+        }
+    }
+    
+    function chooseBar(barNo) {
+        if (barNo > 0 && barNo <= numbers.length) {
+            if (barNo == chosenBar) {
+                chosenBar = null;
+            }
+            else {
+                chosenBar = barNo;
+            }
+        }
+        show();
+    }
+
+    function disableButtons() {
+        if (chosenBar == null) {
+        document.getElementById("noclickyclick").disabled = true;
+        document.getElementById("noclick").disabled = true;
+        }
+        else {
+            document.getElementById("noclickyclick").disabled = false;
+            document.getElementById("noclick").disabled = false;
+        }
+    }
+</script>
+<script src="test.js"></script>
+</body>
+</html>
